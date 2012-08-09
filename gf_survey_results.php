@@ -64,7 +64,7 @@
 		</style>
 		
 		<?php
-		$form_id = $_REQUEST['form_id'] ?: $forms[0]->id;
+		$form_id = $_REQUEST['form_id'] ? $_REQUEST['form_id'] : $forms[0]->id;
 		$form_meta = RGFormsModel::get_form_meta($form_id);
 		
 		$q = "SELECT * FROM wp_rg_lead_detail_long WHERE lead_detail_id IN ( SELECT id FROM wp_rg_lead_detail WHERE form_id = 2 )";
@@ -75,127 +75,143 @@
 		?>
 		
 		<div class="wrap">
-			<h2><?php echo $form_meta['title']; ?></h2>
-		
-			<form class="gf_survey_result_form_select">
-				<input type="hidden" name="page" value="<?php echo $_REQUEST['page']; ?>" />
-				<label for="form_id">Select a Form:</label>
-				<select name="form_id" id="form_id" onchange="javascript:form.submit();">
-					<?php foreach($forms as $form): ?>
-						<option value="<?php echo $form->id; ?>" <?php if($_REQUEST['form_id'] == $form->id) echo 'selected="selected"'; ?>><?php echo $form->title; ?></option>
-					<?php endforeach; ?>
-				</select>
-				<button type="submit">Select</button>
-			</form>
+			
+			<?php if(sizeof($forms)): ?>
+			
+				<h2><?php echo $form_meta['title']; ?></h2>
+			
+				<form class="gf_survey_result_form_select">
+					<input type="hidden" name="page" value="<?php echo $_REQUEST['page']; ?>" />
+					<label for="form_id">Select a Form:</label>
+					<select name="form_id" id="form_id" onchange="javascript:form.submit();">
+						<?php foreach($forms as $form): ?>
+							<option value="<?php echo $form->id; ?>" <?php if($_REQUEST['form_id'] == $form->id) echo 'selected="selected"'; ?>><?php echo $form->title; ?></option>
+						<?php endforeach; ?>
+					</select>
+					<button type="submit">Select</button>
+				</form>
+			
+			<?php else: ?>
+				
+				<div style="margin:50px 0 0 10px;">
+					You don't have any active forms. Let's go <a href="?page=gf_new_form">create one</a>
+				</div>
+				
+			<?php endif; ?>
 			
 			<?php
 			
-			foreach($form_meta["fields"] as $field){
-				//var_dump($field["type"]);
-				$field_id = $field["id"];
+			if(is_array($form_meta["fields"])) {
+			
+				foreach($form_meta["fields"] as $field){
+					//var_dump($field["type"]);
+					$field_id = $field["id"];
+					
+					//hide these field types
+					switch($field['type']) {
+						case "name":
+						case "phone":
+						case "email":
+							continue(2);
+					}
+					
+					echo "<div class=\"gf_survey_result_field postbox\">";
+					
+					//set options and display headers
+					switch($field['type']) {
+						case "section":
+							echo "<h3 class=\"hndle\">".$field["label"]."</h3>";
+							$show_graph = false;
+							break;
+						case "textarea":
+							echo "<h3 class=\"hndle\">".$field["label"]."</h3>";
+							$show_graph = false;
+							break;
+						default:
+							echo "<h3 class=\"hndle\">".$field["label"]."</h3>";
+							$show_graph = true;
+					}
+					
+					$q = "SELECT id, value, count(*) as value_count
+						FROM wp_rg_lead_detail WHERE form_id = {$form_id} and FLOOR(field_number) = {$field_id}
+						GROUP BY value
+						ORDER BY count(*) DESC";
+					$values = $wpdb->get_results($q);
+					
+					//var_dump($q);
+					//var_dump($values);
+					
+					$entry_count = 0;
+					foreach ($values as $value){ $entry_count += (int) $value->value_count; }
+					
+					if($entry_count):
+						echo "<div class=\"inside\">";
+						
+						$graph_id = "gf_survey_result_graph_{$field_id}"; ?>
+						
+						<?php if($show_graph): ?><div class="gf_survey_result_graph" id="<?php echo $graph_id; ?>"></div><?php endif; ?>
+						<table class="gf_survey_result_value_table widefat">
+						<thead><tr><th>Value</th><th>Count</th><th>Percentage</th></tr></thead>
+						<tbody>
+						<?php
+						$graph_data = array();
+						$graph_labels = array();
+						foreach ($values as $value):
+							$graph_data[] = $value->value_count;
+							$graph_labels[] = addslashes(htmlspecialchars($value->value));
+							$percentage = number_format((($value->value_count/$entry_count) * 100.00),2); ?>
+							<tr>
+								<td class="value"><?php
+									if(array_key_exists($value->id, $long_values)) {
+										echo nl2br(htmlspecialchars($long_values[$value->id]));
+									} else {
+										echo nl2br(htmlspecialchars($value->value));
+									}
+								?></td>
+								<td class="count"><?php echo $value->value_count; ?></td>
+								<td class="percentage"><?php echo $percentage; ?>%</td>
+							</tr>
+						<?php endforeach; ?>
+						</tbody></table>
+						
+						<?php if($show_graph): ?>
+							<script type="text/javascript">
+								var r = Raphael("<?php echo $graph_id; ?>"),
+								pie = r.piechart(120, 120, 100,
+									[<?php echo implode(',', $graph_data); ?>],
+									{
+										legend: ["<?php echo implode('","', $graph_labels); ?>"], legendpos: "east"
+									}
+								);
+								pie.hover(function () {
+									this.sector.stop();
+									this.sector.scale(1.1, 1.1, this.cx, this.cy);
 				
-				//hide these field types
-				switch($field['type']) {
-					case "name":
-					case "phone":
-					case "email":
-						continue(2);
+									if (this.label) {
+										this.label[0].stop();
+										this.label[0].attr({ r: 7.5 });
+										this.label[1].attr({ "font-weight": 800 });
+									}
+								}, function () {
+									this.sector.animate({ transform: 's1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
+				
+									if (this.label) {
+										this.label[0].animate({ r: 5 }, 500, "bounce");
+										this.label[1].attr({ "font-weight": 400 });
+									}
+								});
+							</script>
+						<?php endif;
+						
+						echo "</div>"; // .inside
+					endif;
+					
+					echo "<div class=\"gf_survey_result_field_clear\"></div>
+						</div>"; // .gf_survey_result_field
 				}
 				
-				echo "<div class=\"gf_survey_result_field postbox\">";
-				
-				//set options and display headers
-				switch($field['type']) {
-					case "section":
-						echo "<h3 class=\"hndle\">".$field["label"]."</h3>";
-						$show_graph = false;
-						break;
-					case "textarea":
-						echo "<h3 class=\"hndle\">".$field["label"]."</h3>";
-						$show_graph = false;
-						break;
-					default:
-						echo "<h3 class=\"hndle\">".$field["label"]."</h3>";
-						$show_graph = true;
-				}
-				
-				$q = "SELECT id, value, count(*) as value_count
-					FROM wp_rg_lead_detail WHERE form_id = {$form_id} and FLOOR(field_number) = {$field_id}
-					GROUP BY value
-					ORDER BY count(*) DESC";
-				$values = $wpdb->get_results($q);
-				
-				//var_dump($q);
-				//var_dump($values);
-				
-				$entry_count = 0;
-				foreach ($values as $value){ $entry_count += (int) $value->value_count; }
-				
-				if($entry_count):
-					echo "<div class=\"inside\">";
-					
-					$graph_id = "gf_survey_result_graph_{$field_id}"; ?>
-					
-					<?php if($show_graph): ?><div class="gf_survey_result_graph" id="<?php echo $graph_id; ?>"></div><?php endif; ?>
-					<table class="gf_survey_result_value_table widefat">
-					<thead><tr><th>Value</th><th>Count</th><th>Percentage</th></tr></thead>
-					<tbody>
-					<?php
-					$graph_data = array();
-					$graph_labels = array();
-					foreach ($values as $value):
-						$graph_data[] = $value->value_count;
-						$graph_labels[] = addslashes(htmlspecialchars($value->value));
-						$percentage = number_format((($value->value_count/$entry_count) * 100.00),2); ?>
-						<tr>
-							<td class="value"><?php
-								if(array_key_exists($value->id, $long_values)) {
-									echo nl2br(htmlspecialchars($long_values[$value->id]));
-								} else {
-									echo nl2br(htmlspecialchars($value->value));
-								}
-							?></td>
-							<td class="count"><?php echo $value->value_count; ?></td>
-							<td class="percentage"><?php echo $percentage; ?>%</td>
-						</tr>
-					<?php endforeach; ?>
-					</tbody></table>
-					
-					<?php if($show_graph): ?>
-						<script type="text/javascript">
-							var r = Raphael("<?php echo $graph_id; ?>"),
-							pie = r.piechart(120, 120, 100,
-								[<?php echo implode(',', $graph_data); ?>],
-								{
-									legend: ["<?php echo implode('","', $graph_labels); ?>"], legendpos: "east"
-								}
-							);
-							pie.hover(function () {
-								this.sector.stop();
-								this.sector.scale(1.1, 1.1, this.cx, this.cy);
-			
-								if (this.label) {
-									this.label[0].stop();
-									this.label[0].attr({ r: 7.5 });
-									this.label[1].attr({ "font-weight": 800 });
-								}
-							}, function () {
-								this.sector.animate({ transform: 's1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
-			
-								if (this.label) {
-									this.label[0].animate({ r: 5 }, 500, "bounce");
-									this.label[1].attr({ "font-weight": 400 });
-								}
-							});
-						</script>
-					<?php endif;
-					
-					echo "</div>"; // .inside
-				endif;
-				
-				echo "<div class=\"gf_survey_result_field_clear\"></div>
-					</div>"; // .gf_survey_result_field
 			}
+			
 		echo "</div>"; // .wrap
 	}
 	
