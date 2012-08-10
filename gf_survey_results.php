@@ -67,7 +67,7 @@
 		$form_id = $_REQUEST['form_id'] ? $_REQUEST['form_id'] : $forms[0]->id;
 		$form_meta = RGFormsModel::get_form_meta($form_id);
 		
-		$q = "SELECT * FROM wp_rg_lead_detail_long WHERE lead_detail_id IN ( SELECT id FROM wp_rg_lead_detail WHERE form_id = 2 )";
+		$q = "SELECT * FROM ".$wpdb->prefix."rg_lead_detail_long WHERE lead_detail_id IN ( SELECT id FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = 2 )";
 		$values = $wpdb->get_results($q);
 		$long_values = array();
 		foreach ($values as $value){ $long_values[$value->lead_detail_id] = $value->value; }
@@ -112,6 +112,7 @@
 						case "name":
 						case "phone":
 						case "email":
+						case "page":
 							continue(2);
 					}
 					
@@ -133,7 +134,7 @@
 					}
 					
 					$q = "SELECT id, value, count(*) as value_count
-						FROM wp_rg_lead_detail WHERE form_id = {$form_id} and FLOOR(field_number) = {$field_id}
+						FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = {$form_id} and FLOOR(field_number) = {$field_id}
 						GROUP BY value
 						ORDER BY count(*) DESC";
 					$values = $wpdb->get_results($q);
