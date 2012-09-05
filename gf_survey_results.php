@@ -11,14 +11,12 @@
 	function gf_survey_results_display() {
 	    global $wpdb;
 		
-		$plugin_dir = dirname(__FILE__);
-		
 		if(!class_exists("GFEntryDetail"))
-			require_once("{$plugin_dir}/../gravityforms/entry_detail.php");
+			require_once(dirname(__FILE__)."/../gravityforms/entry_detail.php");
 		if(!class_exists("RGFormsModel"))
-			require_once("{$plugin_dir}/../gravityforms/forms_model.php");
+			require_once(dirname(__FILE__)."/../gravityforms/forms_model.php");
 		if(!class_exists("GFCommon"))
-			require_once("{$plugin_dir}/../gravityforms/common.php");
+			require_once(dirname(__FILE__)."/../gravityforms/common.php");
 		
 		$forms = RGFormsModel::get_forms(null, "title");
 		
@@ -140,11 +138,8 @@
 						ORDER BY count(*) DESC";
 					$values = $wpdb->get_results($q);
 					
-					//var_dump($q);
-					//var_dump($values);
-					
 					$entry_count = 0;
-					foreach ($values as $value){ $entry_count += (int) $value->value_count; }
+					foreach ($values as $value) { $entry_count += (int) $value->value_count; }
 					
 					if($entry_count):
 						echo "<div class=\"inside\">";
