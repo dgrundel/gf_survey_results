@@ -23,9 +23,10 @@
 		$forms = RGFormsModel::get_forms(null, "title");
 		
 		?>
-		<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/gf_survey_results/js/raphael.js"; ?>"></script>
-		<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/gf_survey_results/js/g.raphael-min.js"; ?>"></script>
-		<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/gf_survey_results/js/g.pie-min.js"; ?>"></script>
+		
+		<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/".basename(dirname(__FILE__))."/js/raphael.js"; ?>"></script>
+		<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/".basename(dirname(__FILE__))."/js/g.raphael-min.js"; ?>"></script>
+		<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/".basename(dirname(__FILE__))."/js/g.pie-min.js"; ?>"></script>
 		<style type="text/css">
 			.gf_survey_result_form_select {
 				padding: 6px 10px;
