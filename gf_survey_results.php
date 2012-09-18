@@ -1,7 +1,7 @@
 <?php
 /*
     Plugin Name: Gravity Forms Survey Results
-    Plugin URI: http://www.webpresencepartners.com
+    Plugin URI: http://webpresencepartners.com/2012/06/19/gravity-forms-add-on-survey-results/
     Description: A Gravity Forms add-on that aggregates entries into handy charts and tables. Uses Raphael to render charts.
     Version: 0.1.1
     Author: Daniel Grundel (dgrundel) and Mahmoud Kassassir (mkassassir), Web Presence Partners
