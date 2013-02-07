@@ -143,12 +143,12 @@
 					//	FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = {$form_id} and FLOOR(field_number) = {$field_id}
 					//	GROUP BY value
 					//	ORDER BY count(*) DESC";
-					$q = "SELECT id, value, count(*) as value_count
+					$q = "SELECT {$wpdb->prefix}rg_lead_detail.id, {$wpdb->prefix}rg_lead_detail.value as value, count(*) as value_count
 					    FROM {$wpdb->prefix}rg_lead_detail
 					    INNER JOIN {$wpdb->prefix}rg_lead
 						ON {$wpdb->prefix}rg_lead_detail.lead_id = {$wpdb->prefix}rg_lead.id
 					    WHERE {$wpdb->prefix}rg_lead.status = 'active'
-					    AND form_id = {$form_id}
+					    AND {$wpdb->prefix}rg_lead_detail.form_id = {$form_id}
 					    AND FLOOR(field_number) = {$field_id}
 					    GROUP BY value
 					    ORDER BY count(*) DESC";
