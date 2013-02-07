@@ -63,10 +63,17 @@
 		</style>
 		
 		<?php
-		$form_id = $_REQUEST['form_id'] ? $_REQUEST['form_id'] : $forms[0]->id;
+		$form_id = absint($_REQUEST['form_id'] ? $_REQUEST['form_id'] : $forms[0]->id);
 		$form_meta = RGFormsModel::get_form_meta($form_id);
 		
-		$q = "SELECT * FROM ".$wpdb->prefix."rg_lead_detail_long WHERE lead_detail_id IN ( SELECT id FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = 2 )";
+		//$q = "SELECT * FROM ".$wpdb->prefix."rg_lead_detail_long WHERE lead_detail_id IN ( SELECT id FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = {$form_id} )";
+		$q = "SELECT * FROM {$wpdb->prefix}rg_lead_detail_long
+		    INNER JOIN {$wpdb->prefix}rg_lead_detail
+			ON {$wpdb->prefix}rg_lead_detail_long.lead_detail_id = {$wpdb->prefix}rg_lead_detail.id
+		    INNER JOIN {$wpdb->prefix}rg_lead
+			ON {$wpdb->prefix}rg_lead_detail.lead_id = {$wpdb->prefix}rg_lead.id
+		    WHERE {$wpdb->prefix}rg_lead.status = 'active'
+		    AND {$wpdb->prefix}rg_lead_detail.form_id = {$form_id}";
 		$values = $wpdb->get_results($q);
 		$long_values = array();
 		foreach ($values as $value){ $long_values[$value->lead_detail_id] = $value->value; }
@@ -132,10 +139,19 @@
 							$show_graph = true;
 					}
 					
+					//$q = "SELECT id, value, count(*) as value_count
+					//	FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = {$form_id} and FLOOR(field_number) = {$field_id}
+					//	GROUP BY value
+					//	ORDER BY count(*) DESC";
 					$q = "SELECT id, value, count(*) as value_count
-						FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = {$form_id} and FLOOR(field_number) = {$field_id}
-						GROUP BY value
-						ORDER BY count(*) DESC";
+					    FROM {$wpdb->prefix}rg_lead_detail
+					    INNER JOIN {$wpdb->prefix}rg_lead
+						ON {$wpdb->prefix}rg_lead_detail.lead_id = {$wpdb->prefix}rg_lead.id
+					    WHERE {$wpdb->prefix}rg_lead.status = 'active'
+					    AND form_id = {$form_id}
+					    AND FLOOR(field_number) = {$field_id}
+					    GROUP BY value
+					    ORDER BY count(*) DESC";
 					$values = $wpdb->get_results($q);
 					
 					$entry_count = 0;
