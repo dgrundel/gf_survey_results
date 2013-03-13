@@ -6,7 +6,20 @@
     Version: 0.1.1
     Author: Daniel Grundel (dgrundel) and Mahmoud Kassassir (mkassassir), Web Presence Partners
     Author URI: http://www.webpresencepartners.com
+    Text Domain: gf_survey_results
+    Domain Path: /languages/
 */
+
+add_action( 'init', 'gf_survey_results_translations' );
+/**
+ * Load translations for the plugin. Text Domain: 'gf_survey_results'
+ */
+function gf_survey_results_translations() {
+	
+	load_plugin_textdomain( 'gf_survey_results', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+	
+}
+
 
 	function gf_survey_results_display() {
 	    global $wpdb;
@@ -88,19 +101,19 @@
 			
 				<form class="gf_survey_result_form_select">
 					<input type="hidden" name="page" value="<?php echo $_REQUEST['page']; ?>" />
-					<label for="form_id">Select a Form:</label>
+					<label for="form_id"><?php _e( 'Select a Form', 'gf_survey_results' ); ?>:</label>
 					<select name="form_id" id="form_id" onchange="javascript:form.submit();">
 						<?php foreach($forms as $form): ?>
 							<option value="<?php echo $form->id; ?>" <?php if($_REQUEST['form_id'] == $form->id) echo 'selected="selected"'; ?>><?php echo $form->title; ?></option>
 						<?php endforeach; ?>
 					</select>
-					<button type="submit">Select</button>
+					<button type="submit"><?php _e( 'Select', 'gf_survey_results' ); ?></button>
 				</form>
 			
 			<?php else: ?>
 				
 				<div style="margin:50px 0 0 10px;">
-					You don't have any active forms. Let's go <a href="?page=gf_new_form">create one</a>
+					<?php echo sprintf( __( 'You don\'t have any active forms. Let\'s go %screate one%s', 'gf_survey_results' ), '<a href="?page=gf_new_form">', '</a>' ); ?>
 				</div>
 				
 			<?php endif; ?>
@@ -164,7 +177,7 @@
 						
 						<?php if($show_graph): ?><div class="gf_survey_result_graph" id="<?php echo $graph_id; ?>"></div><?php endif; ?>
 						<table class="gf_survey_result_value_table widefat">
-						<thead><tr><th>Value</th><th>Count</th><th>Percentage</th></tr></thead>
+						<thead><tr><th><?php _e( 'Value', 'gf_survey_results' ); ?></th><th><?php _e( 'Count', 'gf_survey_results' ); ?></th><th><?php _e( 'Percentage', 'gf_survey_results' ); ?></th></tr></thead>
 						<tbody>
 						<?php
 						$graph_data = array();
@@ -229,8 +242,7 @@
 	}
 	
 	function gf_survey_results_admin_menu($menu_items){
-		$menu_items[] = array("name" => "gf_survey_results", "label" => "Survey Results", "callback" => "gf_survey_results_display", "permission" => "edit_posts");
+		$menu_items[] = array("name" => "gf_survey_results", "label" => __( 'Survey Results', 'gf_survey_results' ), "callback" => "gf_survey_results_display", "permission" => "edit_posts");
 		return $menu_items;
 	}
 	add_filter("gform_addon_navigation", "gf_survey_results_admin_menu");
-?>
