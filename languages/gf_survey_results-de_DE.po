@@ -1,0 +1,99 @@
+# This German Language File: Copyright (C) 2013 by David Decker of deckerweb.de & genesisthemes.de
+# This file is distributed under the same license as the Gravity Forms Survey Results Plugin package.
+#
+# Weitere deutsche Sprachdateien für WordPress-Plugins und -Themes sind hier zu finden:
+# --> http://deckerweb.de/sprachdateien/
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Gravity Forms Survey Results v0.1.1\n"
+"Report-Msgid-Bugs-To: http://deckerweb.de/kontakt/\n"
+"POT-Creation-Date: 2013-03-13 12:13:59+0000\n"
+"PO-Revision-Date: 2013-03-13 13:18+0100\n"
+"Last-Translator: David Decker <deckerweb.mobil@googlemail.com>\n"
+"Language-Team: DECKERWEB <deckerweb.mobil@googlemail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: CSL v1.x\n"
+"X-Poedit-Language: German\n"
+"X-Poedit-Country: GERMANY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;_n_noop:1,2;_c,_nc:4c,1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2\n"
+"X-Poedit-Basepath: ../\n"
+"X-Textdomain-Support: yes\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#@ gf_survey_results
+#. translators: plugin header field 'Name'
+#: gf_survey_results.php:0
+msgid "Gravity Forms Survey Results"
+msgstr "Gravity Formulare Ergebnisübersicht"
+
+#@ gf_survey_results
+#. translators: plugin header field 'PluginURI'
+#: gf_survey_results.php:0
+msgid "http://webpresencepartners.com/2012/06/19/gravity-forms-add-on-survey-results/"
+msgstr "http://webpresencepartners.com/2012/06/19/gravity-forms-add-on-survey-results/"
+
+#@ gf_survey_results
+#. translators: plugin header field 'Description'
+#: gf_survey_results.php:0
+msgid "A Gravity Forms add-on that aggregates entries into handy charts and tables. Uses Raphael to render charts."
+msgstr "Ein Zusatzmodul (Add-On) für Gravity Formus, welches Formulareinträge in einer Übersicht aus Diagrammen und Tabellen aufbereitet. Für die Darstellung der Diagramme wird die Javascript-Bibliothek 'Raphael' verwendet."
+
+#@ gf_survey_results
+#. translators: plugin header field 'Author'
+#: gf_survey_results.php:0
+msgid "Daniel Grundel (dgrundel) and Mahmoud Kassassir (mkassassir), Web Presence Partners"
+msgstr "Daniel Grundel (dgrundel) und Mahmoud Kassassir (mkassassir), Web Presence Partners"
+
+#@ gf_survey_results
+#. translators: plugin header field 'AuthorURI'
+#: gf_survey_results.php:0
+msgid "http://www.webpresencepartners.com"
+msgstr "http://www.webpresencepartners.com/"
+
+#@ gf_survey_results
+#. translators: plugin header field 'Version'
+#: gf_survey_results.php:0
+msgid "0.1.1"
+msgstr "0.1.1"
+
+#@ gf_survey_results
+#: gf_survey_results.php:104
+msgid "Select a Form"
+msgstr "Ein Formular auswählen"
+
+#@ gf_survey_results
+#: gf_survey_results.php:110
+msgid "Select"
+msgstr "Auswählen"
+
+#@ gf_survey_results
+#: gf_survey_results.php:116
+#, php-format
+msgid "You don't have any active forms. Let's go %screate one%s"
+msgstr "Sie haben noch keine aktiven Formulare. &rarr; Erstellen Sie ein %sneues Formular%s."
+
+#@ gf_survey_results
+#: gf_survey_results.php:180
+msgid "Value"
+msgstr "Wert"
+
+#@ gf_survey_results
+#: gf_survey_results.php:180
+msgid "Count"
+msgstr "Anzahl"
+
+#@ gf_survey_results
+#: gf_survey_results.php:180
+msgid "Percentage"
+msgstr "Prozentsatz"
+
+#@ gf_survey_results
+#: gf_survey_results.php:245
+msgid "Survey Results"
+msgstr "Ergebnisübersicht"
+

@@ -1,0 +1,62 @@
+# This file is distributed under the same license as the Gravity Forms Survey Results package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2013-03-13 12:17:06+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/0.1\n"
+"Project-Id-Version: Gravity Forms Survey Results\n"
+
+#: gf_survey_results.php:0
+msgid "Gravity Forms Survey Results"
+msgstr ""
+
+#: gf_survey_results.php:0
+msgid "http://webpresencepartners.com/2012/06/19/gravity-forms-add-on-survey-results/"
+msgstr ""
+
+#: gf_survey_results.php:0
+msgid "A Gravity Forms add-on that aggregates entries into handy charts and tables. Uses Raphael to render charts."
+msgstr ""
+
+#: gf_survey_results.php:0
+msgid "Daniel Grundel (dgrundel) and Mahmoud Kassassir (mkassassir), Web Presence Partners"
+msgstr ""
+
+#: gf_survey_results.php:0
+msgid "http://www.webpresencepartners.com"
+msgstr ""
+
+#: gf_survey_results.php:0
+msgid "0.1.1"
+msgstr ""
+
+#: gf_survey_results.php:104
+msgid "Select a Form"
+msgstr ""
+
+#: gf_survey_results.php:110
+msgid "Select"
+msgstr ""
+
+#: gf_survey_results.php:116
+msgid "You don't have any active forms. Let's go %screate one%s"
+msgstr ""
+
+#: gf_survey_results.php:180
+msgid "Value"
+msgstr ""
+
+#: gf_survey_results.php:180
+msgid "Count"
+msgstr ""
+
+#: gf_survey_results.php:180
+msgid "Percentage"
+msgstr ""
+
+#: gf_survey_results.php:245
+msgid "Survey Results"
+msgstr ""
