@@ -132,6 +132,16 @@ function gf_survey_results_translations() {
 						case "phone":
 						case "email":
 						case "page":
+						case "html":
+							continue(2);
+					}
+
+					switch(strtolower($field['label'])) {
+						case "first name":
+						case "last name":
+						case "email":
+						case "phone number":						
+						case "phone":						
 							continue(2);
 					}
 					
