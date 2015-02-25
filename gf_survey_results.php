@@ -179,6 +179,9 @@ function gf_survey_results_translations() {
 					
 					$entry_count = 0;
 					foreach ($values as $value) { $entry_count += (int) $value->value_count; }
+
+					// hide the graph when there are more than 15 values
+					if(count($values) > 15) { $show_graph = false; }
 					
 					if($entry_count):
 						echo "<div class=\"inside\">";
