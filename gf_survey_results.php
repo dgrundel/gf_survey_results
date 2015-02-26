@@ -76,7 +76,7 @@ function gf_survey_results_display() {
 		td.count,
 		td.percentage { font-family: monospace; }
 
-		.chartjs-pie { display: none; }
+		.chartjs-pie, .chartjs-bar-label { display: none; }
 
 		canvas { margin: 1em; }
 
@@ -103,6 +103,24 @@ function gf_survey_results_display() {
 		"rgba(128,128,128,1)",
 		"rgba(128,128,128,1)",
 		"rgba(128,128,128,1)"
+	);
+
+	$pieColorHighlight = array(
+		"rgba(47,105,191,0.5)",
+		"rgba(162,191,47,0.5)",
+		"rgba(191,90,47,0.5)",
+		"rgba(191,162,47,0.5)",
+		"rgba(119,47,191,0.5)",
+		"rgba(191,47,47,0.5)",
+		"rgba(0,50,127,0.5)",
+		"rgba(131,151,48,0.5)",
+		"rgba(145,68,35,0.5)",
+		"rgba(147,127,45,0.5)",			// 10
+		"rgba(128,128,128,0.5)",		// use grey for values 10-15
+		"rgba(128,128,128,0.5)",
+		"rgba(128,128,128,0.5)",
+		"rgba(128,128,128,0.5)",
+		"rgba(128,128,128,0.5)"
 	);
 	
 	//$q = "SELECT * FROM ".$wpdb->prefix."rg_lead_detail_long WHERE lead_detail_id IN ( SELECT id FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = {$form_id} )";
@@ -188,10 +206,6 @@ function gf_survey_results_display() {
 						$show_graph = true;
 				}
 				
-				//$q = "SELECT id, value, count(*) as value_count
-				//	FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = {$form_id} and FLOOR(field_number) = {$field_id}
-				//	GROUP BY value
-				//	ORDER BY count(*) DESC";
 				$q = "SELECT {$wpdb->prefix}rg_lead_detail.id, {$wpdb->prefix}rg_lead_detail.value as value, count(*) as value_count
 				    FROM {$wpdb->prefix}rg_lead_detail
 				    INNER JOIN {$wpdb->prefix}rg_lead
@@ -215,8 +229,9 @@ function gf_survey_results_display() {
 				?>
 					
 					<?php if($show_graph) { ?>
-						<p>Show: <a href="javascript:void(0)" class="showBar">Bar</a> | <a href="javascript:void(0)" class="showPie">Pie</a></p>
-						<canvas id="chartjs-bar-<?php echo $graph_id; ?>" class="chartjs-bar" width="750" height="400"></canvas>
+						<p>Show: <a href="javascript:void(0)" class="showBarValue">Bar (sorted by value)</a> | <a href="javascript:void(0)" class="showBarLabel">Bar (sorted by label)</a> | <a href="javascript:void(0)" class="showPie">Pie</a></p>
+						<canvas id="chartjs-bar-value-<?php echo $graph_id; ?>" class="chartjs-bar-value" width="750" height="400"></canvas>
+						<canvas id="chartjs-bar-label-<?php echo $graph_id; ?>" class="chartjs-bar-label" width="750" height="400"></canvas>
 						<canvas id="chartjs-pie-<?php echo $graph_id; ?>" class="chartjs-pie" width="400" height="400"></canvas>
 					<?php } ?>
 
@@ -230,34 +245,63 @@ function gf_survey_results_display() {
 						</thead>
 					<tbody>
 					<?php
+
+					// empty the data storage arrays
 					$graph_data = array();
 					$graph_labels = array();
-					foreach ($values as $value):
+					$dataPie = array();
+					$dataBarLabel = array();
+
+					// populate the data storage arrays
+
+					foreach ($values as $value) {
+
+						// set up the reference variables
+						$thisValue = $value->value_count;
+						$thisLabel = addslashes(htmlspecialchars($value->value));
 
 						// build the pie chart data structure
-						
-						$pieData[] = array(
-							"value"     => $value->value_count,
-							"color"     => "#7F7F7F",
-							"highlight" => "#C0C0C0",
-							"label"     => addslashes(htmlspecialchars($value->value))
+						$dataPie[] = array(
+							"value"     => $thisValue,
+							"label"     => $thisLabel
 						);
 
-						$graph_data[] = $value->value_count;
-						$graph_labels[] = addslashes(htmlspecialchars($value->value));
-						$percentage = number_format((($value->value_count/$entry_count) * 100.00),2); ?>
+						// build the bar chart (sorted by value) data structures
+						$graph_data[] = $thisValue;
+						$graph_labels[] = $thisLabel;
+
+						// build the bar chart (sorted by label) data structure
+						$dataBarLabel[] = array(
+							'label' => $thisLabel,
+							'value' => $thisValue
+						);
+
+						$percentage = number_format((($value->value_count/$entry_count) * 100.00),2);
+					?>
+
 						<tr>
-							<td class="value"><?php
+							<td class="value">
+								<?php
 								if(array_key_exists($value->id, $long_values)) {
 									echo nl2br(htmlspecialchars($long_values[$value->id]));
 								} else {
 									echo nl2br(htmlspecialchars($value->value));
 								}
-							?></td>
+								?>
+							</td>
 							<td class="count"><?php echo $value->value_count; ?></td>
 							<td class="percentage"><?php echo $percentage; ?>%</td>
 						</tr>
-					<?php endforeach; ?>
+
+					<?php
+
+					}
+
+					// sort the dataBarLabel array by the label key
+					// use natural-order sorting to handle numeric and alphabetical data properly
+					usort($dataBarLabel, 'gf_sort_natural');
+
+					?>
 					</tbody></table>
 					
 					<?php if($show_graph) { ?>
@@ -265,13 +309,15 @@ function gf_survey_results_display() {
 						<?php /* CHART.JS */ ?>
 						<script>
 							// Get the context of the canvas element we want to select
-							var ctxBar = document.getElementById("chartjs-bar-<?php echo $graph_id; ?>").getContext("2d");
+							var ctxBarValue = document.getElementById("chartjs-bar-value-<?php echo $graph_id; ?>").getContext("2d");
+							var ctxBarLabel = document.getElementById("chartjs-bar-label-<?php echo $graph_id; ?>").getContext("2d");
 							var ctxPie = document.getElementById("chartjs-pie-<?php echo $graph_id; ?>").getContext("2d");
 
 							// expose the total number of values for charting
 							var resultCount = <?php echo count($values); ?>;
 
-							var dataBar = {
+							// write the bar chart data structure (sorted by value)
+							var dataBarValue = {
 								labels: ["<?php echo implode('","', $graph_labels); ?>"],
 								datasets: [
 									{
@@ -285,17 +331,73 @@ function gf_survey_results_display() {
 								]
 							};
 
+							// write the bar chart data structure (sorted by label)
+							var dataBarLabel = {
+								labels: [<?php
+
+									foreach( $dataBarLabel as $i=>$item ) {
+										echo '"' . $item['label'] . '"';
+										// add a comma, except on the last element
+										if ( end( array_keys($dataBarLabel) ) != $i ) {
+											echo ',';
+										}
+									}
+
+								?>],
+								datasets: [
+									{
+										label: "First range",
+										fillColor: "rgba(0,102,170,0.5)",
+										strokeColor: "rgba(0,102,170,0.8)",
+							            highlightFill: "rgba(0,102,170,0.75)",
+							            highlightStroke: "rgba(0,102,170,1)",
+							            data: [<?php
+
+											foreach( $dataBarLabel as $i=>$item ) {
+												echo $item['value'];
+												// add a comma, except on the last element
+												if ( end( array_keys($dataBarLabel) ) != $i ) {
+													echo ',';
+												}
+											}
+
+							            ?>]
+									}
+								]
+							};
+
+							// build the data structure for the label-sorted array
+							<?php
+								/* DEBUG */
+								/*
+								echo '$graph_labels = [';
+								print_r($graph_labels);
+								echo ']';
+
+								echo '$graph_data = [';
+								print_r($graph_data);
+								echo ']';
+
+								echo '$dataBarLabel = [';
+								print_r($dataBarLabel);
+								echo ']';
+								*/
+							?>
+
 							var dataPie = [];
+
+							// empty the array
+							dataPie.length = 0;
 
 							<?php
 
 								// write the javascript data structure
 								for ($i = 0; $i < count($values); $i++) {
 									echo "dataPie.push({";
-										echo "value: "       . $pieData[$i]['value']     . ",";
+										echo "value: "       . $dataPie[$i]['value']     . ",";
 										echo "color: \""     . $pieColor[$i]             . "\",";
-										echo "highlight: \"" . $pieData[$i]['highlight'] . "\",";
-										echo "label: \""     . $pieData[$i]['label']     . "\"";
+										echo "highlight: \"" . $pieColorHighlight[$i]    . "\",";
+										echo "label: \""     . $dataPie[$i]['label']     . "\"";
 									echo "});";
 								}
 							?>
@@ -330,7 +432,8 @@ function gf_survey_results_display() {
 								legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].fillColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
 							};
 
-							var myChartBar = new Chart(ctxBar).Bar(dataBar, optionsBar);
+							var myChartBarLabel = new Chart(ctxBarLabel).Bar(dataBarLabel, optionsBar);
+							var myChartBarValue = new Chart(ctxBarValue).Bar(dataBarValue, optionsBar);
 							var myChartPie = new Chart(ctxPie).Doughnut(dataPie, optionsPie);
 
 						</script>
@@ -341,12 +444,20 @@ function gf_survey_results_display() {
 
 								jQuery(".showPie").click(function(){
 									jQuery(this).closest('.inside').find('.chartjs-pie').show();
-									jQuery(this).closest('.inside').find('.chartjs-bar').hide();
+									jQuery(this).closest('.inside').find('.chartjs-bar-label').hide();
+									jQuery(this).closest('.inside').find('.chartjs-bar-value').hide();
 								});
 
-								jQuery(".showBar").click(function(){
+								jQuery(".showBarLabel").click(function(){
+									jQuery(this).closest('.inside').find('.chartjs-bar-label').show();
 									jQuery(this).closest('.inside').find('.chartjs-pie').hide();
-									jQuery(this).closest('.inside').find('.chartjs-bar').show();
+									jQuery(this).closest('.inside').find('.chartjs-bar-value').hide();
+								});
+
+								jQuery(".showBarValue").click(function(){
+									jQuery(this).closest('.inside').find('.chartjs-bar-value').show();
+									jQuery(this).closest('.inside').find('.chartjs-pie').hide();
+									jQuery(this).closest('.inside').find('.chartjs-bar-label').hide();
 								});
 
 							});
@@ -376,3 +487,8 @@ function gf_survey_results_admin_menu($menu_items){
 	return $menu_items;
 }
 add_filter("gform_addon_navigation", "gf_survey_results_admin_menu");
+
+// this function is used to sort the data for the bar graph label set
+function gf_sort_natural($a, $b) {
+	return strnatcmp($a['label'], $b['label']);
+}
