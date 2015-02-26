@@ -2,9 +2,9 @@
 /*
     Plugin Name: Gravity Forms Survey Results
     Plugin URI: http://webpresencepartners.com/2012/06/19/gravity-forms-add-on-survey-results/
-    Description: A Gravity Forms add-on that aggregates entries into handy charts and tables. Uses Raphael to render charts.
+    Description: A Gravity Forms add-on that aggregates entries into handy charts and tables. Uses Chart.js to render charts.
     Version: 0.1.2
-    Author: Daniel Grundel (dgrundel) and Mahmoud Kassassir (mkassassir), Web Presence Partners
+    Author: Daniel Grundel (dgrundel) and Mahmoud Kassassir (mkassassir), Web Presence Partners.  New chart functionality by Gaelan Lloyd.
     Author URI: http://www.webpresencepartners.com
     Text Domain: gf_survey_results
     Domain Path: /languages/
@@ -35,9 +35,8 @@ function gf_survey_results_display() {
 	
 	?>
 	
-	<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/".basename(dirname(__FILE__))."/js/raphael.js"; ?>"></script>
-	<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/".basename(dirname(__FILE__))."/js/g.raphael-min.js"; ?>"></script>
-	<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/".basename(dirname(__FILE__))."/js/g.pie-min.js"; ?>"></script>
+	<script type="text/javascript" src="<?php echo WP_PLUGIN_URL."/".basename(dirname(__FILE__))."/js/chart.js"; ?>"></script>
+
 	<style type="text/css">
 		.gf_survey_result_form_select {
 			padding: 6px 10px;
@@ -73,11 +72,32 @@ function gf_survey_results_display() {
 			height: 240px;
 		}
 		.gf_survey_result_field_clear { clear: both; }
+
+		.chartjs-pie { display: none; }
 	</style>
 	
 	<?php
 	$form_id = absint($_REQUEST['form_id'] ? $_REQUEST['form_id'] : $forms[0]->id);
 	$form_meta = RGFormsModel::get_form_meta($form_id);
+
+	// set up the pie chart colors
+	$pieColor = array(
+		"rgba(47,105,191,1)",
+		"rgba(162,191,47,1)",
+		"rgba(191,90,47,1)",
+		"rgba(191,162,47,1)",
+		"rgba(119,47,191,1)",
+		"rgba(191,47,47,1)",
+		"rgba(0,50,127,1)",
+		"rgba(131,151,48,1)",
+		"rgba(145,68,35,1)",
+		"rgba(147,127,45,1)",		// 10
+		"rgba(128,128,128,1)",		// use grey for values 10-15
+		"rgba(128,128,128,1)",
+		"rgba(128,128,128,1)",
+		"rgba(128,128,128,1)",
+		"rgba(128,128,128,1)"
+	);
 	
 	//$q = "SELECT * FROM ".$wpdb->prefix."rg_lead_detail_long WHERE lead_detail_id IN ( SELECT id FROM ".$wpdb->prefix."rg_lead_detail WHERE form_id = {$form_id} )";
 	$q = "SELECT * FROM {$wpdb->prefix}rg_lead_detail_long
@@ -182,20 +202,41 @@ function gf_survey_results_display() {
 
 				// hide the graph when there are more than 15 values
 				if(count($values) > 15) { $show_graph = false; }
-				
+
 				if($entry_count):
 					echo "<div class=\"inside\">";
 					
-					$graph_id = "gf_survey_result_graph_{$field_id}"; ?>
+				?>
 					
-					<?php if($show_graph): ?><div class="gf_survey_result_graph" id="<?php echo $graph_id; ?>"></div><?php endif; ?>
+					<?php if($show_graph) { ?>
+						<p>Show: <a href="javascript:void(0)" class="showBar">Bar</a> | <a href="javascript:void(0)" class="showPie">Pie</a></p>
+						<canvas id="chartjs-bar-<?php echo $graph_id; ?>" class="chartjs-bar" width="750" height="400"></canvas>
+						<canvas id="chartjs-pie-<?php echo $graph_id; ?>" class="chartjs-pie" width="400" height="400"></canvas>
+					<?php } ?>
+
 					<table class="gf_survey_result_value_table widefat">
-					<thead><tr><th><?php _e( 'Value', 'gf_survey_results' ); ?></th><th><?php _e( 'Count', 'gf_survey_results' ); ?></th><th><?php _e( 'Percentage', 'gf_survey_results' ); ?></th></tr></thead>
+						<thead>
+							<tr>
+								<th><?php _e( 'Value', 'gf_survey_results' ); ?></th>
+								<th><?php _e( 'Count', 'gf_survey_results' ); ?></th>
+								<th><?php _e( 'Percentage', 'gf_survey_results' ); ?></th>
+							</tr>
+						</thead>
 					<tbody>
 					<?php
 					$graph_data = array();
 					$graph_labels = array();
 					foreach ($values as $value):
+
+						// build the pie chart data structure
+						
+						$pieData[] = array(
+							"value"     => $value->value_count,
+							"color"     => "#7F7F7F",
+							"highlight" => "#C0C0C0",
+							"label"     => addslashes(htmlspecialchars($value->value))
+						);
+
 						$graph_data[] = $value->value_count;
 						$graph_labels[] = addslashes(htmlspecialchars($value->value));
 						$percentage = number_format((($value->value_count/$entry_count) * 100.00),2); ?>
@@ -213,34 +254,98 @@ function gf_survey_results_display() {
 					<?php endforeach; ?>
 					</tbody></table>
 					
-					<?php if($show_graph): ?>
-						<script type="text/javascript">
-							var r = Raphael("<?php echo $graph_id; ?>"),
-							pie = r.piechart(120, 120, 100,
-								[<?php echo implode(',', $graph_data); ?>],
-								{
-									legend: ["<?php echo implode('","', $graph_labels); ?>"], legendpos: "east"
+					<?php if($show_graph) { ?>
+
+						<?php /* CHART.JS */ ?>
+						<script>
+							// Get the context of the canvas element we want to select
+							var ctxBar = document.getElementById("chartjs-bar-<?php echo $graph_id; ?>").getContext("2d");
+							var ctxPie = document.getElementById("chartjs-pie-<?php echo $graph_id; ?>").getContext("2d");
+
+							// expose the total number of values for charting
+							var resultCount = <?php echo count($values); ?>;
+
+							var dataBar = {
+								labels: ["<?php echo implode('","', $graph_labels); ?>"],
+								datasets: [
+									{
+										label: "First range",
+										fillColor: "rgba(0,102,170,0.5)",
+										strokeColor: "rgba(0,102,170,0.8)",
+							            highlightFill: "rgba(0,102,170,0.75)",
+							            highlightStroke: "rgba(0,102,170,1)",
+							            data: [<?php echo implode(',', $graph_data); ?>]
+									}
+								]
+							};
+
+							var dataPie = [];
+
+							<?php
+
+								// write the javascript data structure
+								for ($i = 0; $i < count($values); $i++) {
+									echo "dataPie.push({";
+										echo "value: "       . $pieData[$i]['value']     . ",";
+										echo "color: \""     . $pieColor[$i]             . "\",";
+										echo "highlight: \"" . $pieData[$i]['highlight'] . "\",";
+										echo "label: \""     . $pieData[$i]['label']     . "\"";
+									echo "});";
 								}
-							);
-							pie.hover(function () {
-								this.sector.stop();
-								this.sector.scale(1.1, 1.1, this.cx, this.cy);
-			
-								if (this.label) {
-									this.label[0].stop();
-									this.label[0].attr({ r: 7.5 });
-									this.label[1].attr({ "font-weight": 800 });
-								}
-							}, function () {
-								this.sector.animate({ transform: 's1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
-			
-								if (this.label) {
-									this.label[0].animate({ r: 5 }, 500, "bounce");
-									this.label[1].attr({ "font-weight": 400 });
-								}
+							?>
+
+							var optionsBar = {
+								animation : false,
+								scaleBeginAtZero : true,
+								scaleShowGridLines : true,
+								scaleGridLineColor : "rgba(0,0,0,.1)",
+								scaleGridLineWidth : 1,
+								scaleShowHorizontalLines: true,
+								scaleShowVerticalLines: false,
+								barShowStroke : true,
+								barStrokeWidth : 2,
+								barValueSpacing : 10,
+								barDatasetSpacing : 1,
+								legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].fillColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
+							};
+
+							var optionsPie = {
+								animation : false,
+								scaleBeginAtZero : true,
+								scaleShowGridLines : true,
+								scaleGridLineColor : "rgba(0,0,0,.1)",
+								scaleGridLineWidth : 1,
+								scaleShowHorizontalLines: true,
+								scaleShowVerticalLines: false,
+								barShowStroke : true,
+								barStrokeWidth : 2,
+								barValueSpacing : 10,
+								barDatasetSpacing : 1,
+								legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].fillColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
+							};
+
+							var myChartBar = new Chart(ctxBar).Bar(dataBar, optionsBar);
+							var myChartPie = new Chart(ctxPie).Doughnut(dataPie, optionsPie);
+
+						</script>
+
+						<script>
+							// Add chart togglers
+							jQuery(document).ready(function(){
+
+								jQuery(".showPie").click(function(){
+									jQuery(this).closest('.inside').find('.chartjs-pie').show();
+									jQuery(this).closest('.inside').find('.chartjs-bar').hide();
+								});
+
+								jQuery(".showBar").click(function(){
+									jQuery(this).closest('.inside').find('.chartjs-pie').hide();
+									jQuery(this).closest('.inside').find('.chartjs-bar').show();
+								});
+
 							});
 						</script>
-					<?php endif;
+					<?php }
 					
 					echo "</div>"; // .inside
 				endif;
@@ -256,7 +361,12 @@ function gf_survey_results_display() {
 
 
 function gf_survey_results_admin_menu($menu_items){
-	$menu_items[] = array("name" => "gf_survey_results", "label" => __( 'Survey Results', 'gf_survey_results' ), "callback" => "gf_survey_results_display", "permission" => "edit_posts");
+	$menu_items[] = array(
+		"name"        => "gf_survey_results",
+		"label"       => __( 'Survey Results', 'gf_survey_results' ),
+		"callback"    => "gf_survey_results_display",
+		"permission"  => "edit_posts"
+	);
 	return $menu_items;
 }
 add_filter("gform_addon_navigation", "gf_survey_results_admin_menu");
