@@ -73,7 +73,13 @@ function gf_survey_results_display() {
 		}
 		.gf_survey_result_field_clear { clear: both; }
 
+		td.count,
+		td.percentage { font-family: monospace; }
+
 		.chartjs-pie { display: none; }
+
+		canvas { margin: 1em; }
+
 	</style>
 	
 	<?php
@@ -205,7 +211,7 @@ function gf_survey_results_display() {
 
 				if($entry_count):
 					echo "<div class=\"inside\">";
-					
+					$graph_id = "gf_survey_result_graph_{$field_id}";
 				?>
 					
 					<?php if($show_graph) { ?>
