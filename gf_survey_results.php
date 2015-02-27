@@ -152,6 +152,9 @@ function gf_survey_results_display() {
 					<?php endforeach; ?>
 				</select>
 				<button type="submit"><?php _e( 'Select', 'gf_survey_results' ); ?></button>
+
+				<p>Switch all charts to: <a href="javascript:void(0)" class="showAllBarValue">Bar (sorted by value)</a> | <a href="javascript:void(0)" class="showAllBarLabel">Bar (sorted by label)</a> | <a href="javascript:void(0)" class="showAllPie">Pie</a></p>
+
 			</form>
 		
 		<?php else: ?>
@@ -458,6 +461,26 @@ function gf_survey_results_display() {
 									jQuery(this).closest('.inside').find('.chartjs-bar-value').show();
 									jQuery(this).closest('.inside').find('.chartjs-pie').hide();
 									jQuery(this).closest('.inside').find('.chartjs-bar-label').hide();
+								});
+
+								// ---
+
+								jQuery(".showAllPie").click(function(){
+									jQuery('.chartjs-pie').show();
+									jQuery('.chartjs-bar-label').hide();
+									jQuery('.chartjs-bar-value').hide();
+								});
+
+								jQuery(".showAllBarLabel").click(function(){
+									jQuery('.chartjs-bar-label').show();
+									jQuery('.chartjs-pie').hide();
+									jQuery('.chartjs-bar-value').hide();
+								});
+
+								jQuery(".showAllBarValue").click(function(){
+									jQuery('.chartjs-bar-value').show();
+									jQuery('.chartjs-pie').hide();
+									jQuery('.chartjs-bar-label').hide();
 								});
 
 							});
